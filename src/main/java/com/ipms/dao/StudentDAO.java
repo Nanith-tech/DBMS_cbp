@@ -16,7 +16,37 @@ public class StudentDAO {
             return null;
         }
     }
+    public void updateStudent(int id, Student s) {
+        try {
+            Connection con = DBConnection.getConnection();
+            String sql = "UPDATE students SET name=?, email=?, branch=? WHERE id=?";
+            PreparedStatement ps = con.prepareStatement(sql);
 
+            ps.setString(1, s.getName());
+            ps.setString(2, s.getEmail());
+            ps.setString(3, s.getBranch());
+            ps.setInt(4, id);
+
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteStudent(int id) {
+        try {
+            Connection con = DBConnection.getConnection();
+            String sql = "DELETE FROM students WHERE id=?";
+            PreparedStatement ps = con.prepareStatement(sql);
+
+            ps.setInt(1, id);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public void addStudent(Student s) {
         try {
             Connection con = DBConnection.getConnection();
