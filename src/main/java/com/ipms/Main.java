@@ -1,5 +1,3 @@
-package com.ipms;
-
 import com.ipms.ui.LoginUI;
 
 public class Main {

@@ -5,6 +5,7 @@ import com.ipms.model.Student;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.sql.ResultSet;
 
 public class StudentUI extends JFrame {
@@ -16,47 +17,38 @@ public class StudentUI extends JFrame {
     int selectedId = -1;
 
     public StudentUI() {
-        setTitle("Students");
-        setSize(600,400);
-        setLayout(null);
+        setTitle("Student Management");
+        setSize(700,500);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout(10,10));
 
-        JLabel l1 = new JLabel("Name:");
-        l1.setBounds(20,20,80,25);
-        add(l1);
+        // 🔷 FORM PANEL
+        JPanel formPanel = new JPanel(new GridLayout(3,2,10,10));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Student Details"));
 
         name = new JTextField();
-        name.setBounds(100,20,150,25);
-        add(name);
-
-        JLabel l2 = new JLabel("Email:");
-        l2.setBounds(20,60,80,25);
-        add(l2);
-
         email = new JTextField();
-        email.setBounds(100,60,150,25);
-        add(email);
-
-        JLabel l3 = new JLabel("Branch:");
-        l3.setBounds(20,100,80,25);
-        add(l3);
-
         branch = new JTextField();
-        branch.setBounds(100,100,150,25);
-        add(branch);
 
-        JButton add = new JButton("Add");
-        add.setBounds(300,20,100,30);
-        add(add);
+        formPanel.add(new JLabel("Name:"));
+        formPanel.add(name);
+        formPanel.add(new JLabel("Email:"));
+        formPanel.add(email);
+        formPanel.add(new JLabel("Branch:"));
+        formPanel.add(branch);
 
-        JButton update = new JButton("Update");
-        update.setBounds(300,60,100,30);
-        add(update);
+        // 🔷 BUTTON PANEL
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
 
-        JButton delete = new JButton("Delete");
-        delete.setBounds(300,100,100,30);
-        add(delete);
+        JButton addBtn = new JButton("Add");
+        JButton updateBtn = new JButton("Update");
+        JButton deleteBtn = new JButton("Delete");
 
-        // TABLE
+        buttonPanel.add(addBtn);
+        buttonPanel.add(updateBtn);
+        buttonPanel.add(deleteBtn);
+
+        // 🔷 TABLE PANEL
         model = new DefaultTableModel();
         table = new JTable(model);
 
@@ -65,13 +57,20 @@ public class StudentUI extends JFrame {
         model.addColumn("Email");
         model.addColumn("Branch");
 
-        JScrollPane pane = new JScrollPane(table);
-        pane.setBounds(20,160,540,180);
-        add(pane);
+        table.setRowHeight(25);
+        JScrollPane tablePane = new JScrollPane(table);
+
+        // 🔷 LAYOUT STRUCTURE
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(formPanel, BorderLayout.CENTER);
+        topPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(tablePane, BorderLayout.CENTER);
 
         loadTable();
 
-        // SELECT ROW
+        // 🔥 ROW SELECTION (same logic as before)
         table.getSelectionModel().addListSelectionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {
@@ -82,45 +81,50 @@ public class StudentUI extends JFrame {
             }
         });
 
-        // ADD
-        add.addActionListener(e -> {
-            StudentDAO dao = new StudentDAO();
-            dao.addStudent(new Student(
-                    name.getText(),
-                    email.getText(),
-                    branch.getText()
-            ));
-            loadTable();
-        });
-
-        // UPDATE
-        update.addActionListener(e -> {
-            if (selectedId == -1) {
-                JOptionPane.showMessageDialog(this, "Select a row first");
-                return;
-            }
-
-            StudentDAO dao = new StudentDAO();
-            dao.updateStudent(selectedId, new Student(
+        // 🔥 ADD
+        addBtn.addActionListener(e -> {
+            new StudentDAO().addStudent(new Student(
                     name.getText(),
                     email.getText(),
                     branch.getText()
             ));
 
+            clearFields();
             loadTable();
         });
 
-        // DELETE
-        delete.addActionListener(e -> {
+        // 🔥 UPDATE
+        updateBtn.addActionListener(e -> {
             if (selectedId == -1) {
                 JOptionPane.showMessageDialog(this, "Select a row first");
                 return;
             }
 
-            StudentDAO dao = new StudentDAO();
-            dao.deleteStudent(selectedId);
+            new StudentDAO().updateStudent(selectedId, new Student(
+                    name.getText(),
+                    email.getText(),
+                    branch.getText()
+            ));
 
+            clearFields();
+            selectedId = -1;
             loadTable();
+        });
+
+        // 🔥 DELETE
+        deleteBtn.addActionListener(e -> {
+            if (selectedId == -1) {
+                JOptionPane.showMessageDialog(this, "Select a row first");
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete this student?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                new StudentDAO().deleteStudent(selectedId);
+                clearFields();
+                selectedId = -1;
+                loadTable();
+            }
         });
 
         setVisible(true);
@@ -128,9 +132,7 @@ public class StudentUI extends JFrame {
 
     private void loadTable() {
         try {
-            StudentDAO dao = new StudentDAO();
-            ResultSet rs = dao.getAllStudents();
-
+            ResultSet rs = new StudentDAO().getAllStudents();
             model.setRowCount(0);
 
             while (rs.next()) {
@@ -145,5 +147,11 @@ public class StudentUI extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void clearFields() {
+        name.setText("");
+        email.setText("");
+        branch.setText("");
     }
 }
