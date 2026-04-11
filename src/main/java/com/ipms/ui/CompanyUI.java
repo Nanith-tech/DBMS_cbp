@@ -14,10 +14,17 @@ public class CompanyUI extends JFrame {
 
     JTextField name, role, pkg;
     int selectedId = -1;
+    private final boolean adminMode;
 
     public CompanyUI() {
+        this(true);
+    }
+
+    public CompanyUI(boolean adminMode) {
+        this.adminMode = adminMode;
         setTitle("Companies");
         setSize(600,400);
+        setLocationRelativeTo(null);
         setLayout(null);
 
         JLabel l1 = new JLabel("Name:");
@@ -56,6 +63,13 @@ public class CompanyUI extends JFrame {
         delete.setBounds(300,100,100,30);
         add(delete);
 
+        add.setVisible(adminMode);
+        update.setVisible(adminMode);
+        delete.setVisible(adminMode);
+        name.setEditable(adminMode);
+        role.setEditable(adminMode);
+        pkg.setEditable(adminMode);
+
         // TABLE
         model = new DefaultTableModel();
         table = new JTable(model);
@@ -84,6 +98,9 @@ public class CompanyUI extends JFrame {
 
         // ADD
         add.addActionListener(e -> {
+            if (!adminMode) {
+                return;
+            }
             CompanyDAO dao = new CompanyDAO();
             dao.addCompany(new Company(
                     name.getText(),
@@ -95,6 +112,9 @@ public class CompanyUI extends JFrame {
 
         // UPDATE
         update.addActionListener(e -> {
+            if (!adminMode) {
+                return;
+            }
             if (selectedId == -1) {
                 JOptionPane.showMessageDialog(this, "Select a row first");
                 return;
@@ -112,6 +132,9 @@ public class CompanyUI extends JFrame {
 
         // DELETE
         delete.addActionListener(e -> {
+            if (!adminMode) {
+                return;
+            }
             if (selectedId == -1) {
                 JOptionPane.showMessageDialog(this, "Select a row first");
                 return;

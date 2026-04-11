@@ -1,6 +1,7 @@
 package com.ipms.ui;
 
 import com.ipms.dao.UserDAO;
+import com.ipms.model.User;
 
 import javax.swing.*;
 
@@ -36,10 +37,11 @@ public class LoginUI extends JFrame {
 
         btn.addActionListener(e -> {
             UserDAO dao = new UserDAO();
+            User loggedInUser = dao.login(user.getText(), new String(pass.getPassword()));
 
-            if(dao.login(user.getText(), new String(pass.getPassword()))) {
+            if(loggedInUser != null) {
                 JOptionPane.showMessageDialog(this,"Login Success");
-                new DashboardUI();
+                new DashboardUI(loggedInUser);
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this,"Invalid Credentials");

@@ -67,6 +67,7 @@ public class PlacementUI extends JFrame {
         model.addColumn("Student");
         model.addColumn("Company");
         model.addColumn("Package");
+        model.addColumn("Placed On");
 
         JScrollPane pane = new JScrollPane(table);
         pane.setBounds(20,150,440,180);
@@ -91,6 +92,10 @@ public class PlacementUI extends JFrame {
         assign.addActionListener(e -> {
             String studentName = (String) studentBox.getSelectedItem();
             String companyName = (String) companyBox.getSelectedItem();
+            if (studentName == null || companyName == null) {
+                JOptionPane.showMessageDialog(this, "Select a student and company first");
+                return;
+            }
 
             int studentId = studentMap.get(studentName);
             int companyId = companyMap.get(companyName);
@@ -103,6 +108,7 @@ public class PlacementUI extends JFrame {
 
             dao.addPlacement(new Placement(studentId, companyId));
 
+            loadDropdowns();
             loadTable();
         });
 
@@ -111,9 +117,14 @@ public class PlacementUI extends JFrame {
 
     private void loadDropdowns() {
         try {
+            studentBox.removeAllItems();
+            companyBox.removeAllItems();
+            studentMap.clear();
+            companyMap.clear();
+
             Connection con = DBConnection.getConnection();
 
-            ResultSet rs1 = con.createStatement().executeQuery("SELECT id, name FROM students");
+            ResultSet rs1 = con.createStatement().executeQuery("SELECT id, name FROM students ORDER BY name");
             while (rs1.next()) {
                 String name = rs1.getString("name");
                 int id = rs1.getInt("id");
@@ -122,7 +133,7 @@ public class PlacementUI extends JFrame {
                 studentMap.put(name, id);
             }
 
-            ResultSet rs2 = con.createStatement().executeQuery("SELECT id, name FROM companies");
+            ResultSet rs2 = con.createStatement().executeQuery("SELECT id, name FROM companies ORDER BY name");
             while (rs2.next()) {
                 String name = rs2.getString("name");
                 int id = rs2.getInt("id");
@@ -148,7 +159,8 @@ public class PlacementUI extends JFrame {
                         rs.getInt("id"),
                         rs.getString("student"),
                         rs.getString("company"),
-                        rs.getInt("package")
+                        rs.getInt("package"),
+                        rs.getDate("placed_on")
                 });
             }
         } catch (Exception e) {
