@@ -1,15 +1,16 @@
 package com.ipms.dao;
 
+import com.ipms.model.User;
 import com.ipms.util.DBConnection;
+
 import java.sql.*;
 
 public class UserDAO {
 
-    public boolean login(String username, String password) {
+    public User login(String username, String password) {
         try {
             Connection con = DBConnection.getConnection();
-
-            String sql = "SELECT * FROM users WHERE username=? AND password=?";
+            String sql = "SELECT id, username, password, role, student_id FROM users WHERE username=? AND password=?";
             PreparedStatement ps = con.prepareStatement(sql);
 
             ps.setString(1, username);
@@ -17,11 +18,19 @@ public class UserDAO {
 
             ResultSet rs = ps.executeQuery();
 
-            return rs.next();
+            if (rs.next()) {
+                return new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("role"),
+                        (Integer) rs.getObject("student_id")
+                );
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+        return null;
     }
 }

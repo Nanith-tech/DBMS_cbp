@@ -8,26 +8,63 @@ import java.sql.*;
 public class PlacementDAO {
 
     public void addPlacement(Placement p) {
+        Connection con = null;
         try {
-            Connection con = DBConnection.getConnection();
-            String sql = "INSERT INTO placements (student_id, company_id) VALUES (?, ?)";
+            con = DBConnection.getConnection();
+            con.setAutoCommit(false);
+
+            String duplicateSql = "SELECT id FROM placed_students WHERE original_student_id=?";
+            PreparedStatement duplicatePs = con.prepareStatement(duplicateSql);
+            duplicatePs.setInt(1, p.getStudentId());
+            ResultSet duplicateRs = duplicatePs.executeQuery();
+            if (duplicateRs.next()) {
+                con.rollback();
+                return;
+            }
+
+            String sql = """
+                INSERT INTO placed_students (original_student_id, name, email, branch, company_id, company_name, role, package, placed_on)
+                SELECT s.id, s.name, s.email, s.branch, c.id, c.name, c.role, c.package, CURRENT_DATE()
+                FROM students s
+                JOIN companies c ON c.id=?
+                WHERE s.id=?
+            """;
             PreparedStatement ps = con.prepareStatement(sql);
-
-            ps.setInt(1, p.getStudentId());
-            ps.setInt(2, p.getCompanyId());
-
+            ps.setInt(1, p.getCompanyId());
+            ps.setInt(2, p.getStudentId());
             ps.executeUpdate();
 
+            String deleteSql = "DELETE FROM students WHERE id=?";
+            PreparedStatement deletePs = con.prepareStatement(deleteSql);
+            deletePs.setInt(1, p.getStudentId());
+            deletePs.executeUpdate();
+
+            con.commit();
+
         } catch (Exception e) {
+            try {
+                if (con != null) {
+                    con.rollback();
+                }
+            } catch (SQLException rollbackError) {
+                rollbackError.printStackTrace();
+            }
             e.printStackTrace();
+        } finally {
+            try {
+                if (con != null) {
+                    con.setAutoCommit(true);
+                }
+            } catch (SQLException autoCommitError) {
+                autoCommitError.printStackTrace();
+            }
         }
     }
     public void deletePlacement(int id) {
         try {
             Connection con = DBConnection.getConnection();
-            String sql = "DELETE FROM placements WHERE id=?";
+            String sql = "DELETE FROM placed_students WHERE id=?";
             PreparedStatement ps = con.prepareStatement(sql);
-            System.out.println("Running delete for ID: " + id);
             ps.setInt(1, id);
             ps.executeUpdate();
         } catch (Exception e) {
@@ -38,10 +75,9 @@ public class PlacementDAO {
         try {
             Connection con = DBConnection.getConnection();
             String sql = """
-                SELECT p.id, s.name AS student, c.name AS company, c.package
-                FROM placements p
-                JOIN students s ON p.student_id = s.id
-                JOIN companies c ON p.company_id = c.id
+                SELECT id, name AS student, company_name AS company, package, placed_on
+                FROM placed_students
+                ORDER BY placed_on DESC, id DESC
             """;
 
             PreparedStatement ps = con.prepareStatement(sql);
@@ -55,7 +91,7 @@ public class PlacementDAO {
     public boolean isAlreadyPlaced(int studentId) {
         try {
             Connection con = DBConnection.getConnection();
-            String sql = "SELECT * FROM placements WHERE student_id=?";
+            String sql = "SELECT id FROM placed_students WHERE original_student_id=?";
             PreparedStatement ps = con.prepareStatement(sql);
 
             ps.setInt(1, studentId);
