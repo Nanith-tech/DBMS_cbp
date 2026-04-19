@@ -40,6 +40,10 @@ public class LoginUI extends JFrame {
             User loggedInUser = dao.login(user.getText(), new String(pass.getPassword()));
 
             if(loggedInUser != null) {
+                if (loggedInUser.isStudent() && !dao.studentExistsForUser(loggedInUser)) {
+                    JOptionPane.showMessageDialog(this, "Student doesn't exist");
+                    return;
+                }
                 JOptionPane.showMessageDialog(this,"Login Success");
                 new DashboardUI(loggedInUser);
                 dispose();

@@ -33,4 +33,32 @@ public class UserDAO {
         }
         return null;
     }
+
+    public boolean studentExistsForUser(User user) {
+        if (user == null || !user.isStudent()) {
+            return false;
+        }
+
+        try {
+            Connection con = DBConnection.getConnection();
+            if (user.getStudentId() != null) {
+                String byIdSql = "SELECT id FROM students WHERE id=?";
+                PreparedStatement byIdPs = con.prepareStatement(byIdSql);
+                byIdPs.setInt(1, user.getStudentId());
+                ResultSet byIdRs = byIdPs.executeQuery();
+                if (byIdRs.next()) {
+                    return true;
+                }
+            }
+
+            String byEmailSql = "SELECT id FROM students WHERE email=?";
+            PreparedStatement byEmailPs = con.prepareStatement(byEmailSql);
+            byEmailPs.setString(1, user.getUsername());
+            ResultSet byEmailRs = byEmailPs.executeQuery();
+            return byEmailRs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
